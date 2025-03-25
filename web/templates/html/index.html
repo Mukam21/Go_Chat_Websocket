@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Чат на WebSocket</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+
+        #chat {
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background: #fff;
+            padding: 10px;
+            height: 300px;
+            overflow-y: scroll;
+            margin-bottom: 10px;
+        }
+
+        #messageInput {
+            width: calc(100% - 100px);
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        #sendButton {
+            padding: 10px;
+            border: none;
+            background-color: #28a745;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        #sendButton:hover {
+            background-color: #218838;
+        }
+
+        .timestamp {
+            font-size: 0.8em;
+            color: #888;
+        }
+
+        .message {
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Чат на WebSocket</h1>
+    <div id="chat"></div>
+    <input type="text" id="username" placeholder="Введите ваше имя..." />
+    <input type="text" id="messageInput" placeholder="Введите сообщение..." />
+    <button id="sendButton">Отправить</button>
+    <script>
+        const chat = document.getElementById('chat');
+        const messageInput = document.getElementById('messageInput');
+        const sendButton = document.getElementById('sendButton');
+        const usernameInput = document.getElementById('username');
+        const socket = new WebSocket('ws://API_addres:8080/ws');
+        socket.onopen = function () {
+            console.log('Соединение установлено');
+        };
+        socket.onmessage = function (event) {
+            const message = document.createElement('div');
+            const timestamp = new Date().toLocaleTimeString();
+            message.className = 'message';
+            message.innerHTML = `<span class="timestamp">${timestamp}</span>: ${event.data}`;
+            chat.appendChild(message);
+            chat.scrollTop = chat.scrollHeight; // Прокрутка вниз
+        };
+        socket.onerror = function (error) {
+            console.error('WebSocket error:', error);
+        };
+        socket.onclose = function () {
+            console.log('Соединение закрыто');
+        };
+        sendButton.onclick = function () {
+            const message = messageInput.value;
+            const username = usernameInput.value || "Гость"; // Если имя не введено, использовать "Гость"
+            if (message) {
+                const msgObject = {
+                    username: username,
+                    message: message,
+                    time: new Date().toLocaleTimeString()
+                };
+                socket.send(JSON.stringify(msgObject)); // Отправляем JSON
+                messageInput.value = ''; // Очистка поля ввода
+            }
+        };
+        messageInput.addEventListener('keypress', function (event) {
+            if (event.key === 'Enter') {
+                sendButton.click(); // Отправка сообщения по нажатию Enter
+            }
+        });
+    </script>
+</body>
+
+</html>
